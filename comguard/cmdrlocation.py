@@ -22,7 +22,7 @@ class CmdrLocation:
             faction_1:str = conflict['Faction1']['Name']
             faction_2:str = conflict['Faction2']['Name']
 
-            self.conflicts.append[faction_1, faction_2]
+            self.conflicts.append([faction_1, faction_2])
 
     def get_opponent(self, factionName:str) -> str:
         for conflict in self.conflicts:

@@ -28,6 +28,7 @@ class CmdrData:
         self.Location.settlement = locationData["settlement"]
         self.Location.conflictZone = locationData["conflictzone"]
         self.Location.megaship = locationData["megaship"]
+        self.Location.conflicts = locationData["conflicts"]
 
 
     def set_missions(self, missions:list):
@@ -42,6 +43,7 @@ class CmdrData:
             "settlement": self.Location.settlement,
             "conflictzone": self.Location.conflictZone,
             "megaship": self.Location.megaship,
+            "conflicts": self.Location.conflicts
         }
         return location
     
