@@ -18,7 +18,7 @@ class CmdrData:
         self.cmdrName: str = cmdrName
         self.Location: CmdrLocation = CmdrLocation(self)
         self.targetData:dict = {}
-        self.missionData:list = []
+        self.missionData:dict = {}
 
 
     def set_location(self, locationData:dict):
@@ -31,8 +31,9 @@ class CmdrData:
         self.Location.conflicts = locationData["conflicts"]
 
 
-    def set_missions(self, missions:list):
-        self.missionData = missions       
+    def set_missions(self, missions:dict):
+        for key, msn in missions:
+            self.missionData[int(key)] = msn       
 
 
     def get_location(self) -> dict:
@@ -48,6 +49,6 @@ class CmdrData:
         return location
     
 
-    def get_missions(self) -> list:
+    def get_missions(self) -> dict:
         return self.missionData
 
