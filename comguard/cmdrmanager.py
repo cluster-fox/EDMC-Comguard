@@ -175,8 +175,8 @@ class CmdrManager:
     def get_mission(self, cmdr, missionId:int) -> dict:
         return self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData.get(missionId, {})
     
-    def pop_target(self, cmdr, victim) -> dict | None:
-        targetInfo = self.cmdrLibrary[self.get_cmdr_index(cmdr)].targetData.pop(victim, None)
+    def get_target(self, cmdr, victim) -> dict | None:
+        targetInfo = self.cmdrLibrary[self.get_cmdr_index(cmdr)].targetData.get(victim, None)
         return targetInfo
 
     def deactivate_mission(self, cmdr, missionId:int):
@@ -184,8 +184,8 @@ class CmdrManager:
 
     def clean_missions(self):
         for key in self.cmdrLibrary:
-            for missionId, msn in self.cmdrLibrary[key].missionData.items():
-                expired = datetime.now(timezone.utc) > datetime.strptime(msn["Expiry"], "%Y-%m-%dT%H:%M:%SZ")
+            for missionId, msn in self.cmdrLibrary[key].missionData.copy().items():
+                expired = datetime.now(timezone.utc) > datetime.strptime(f"{msn['Expiry']} +0000", "%Y-%m-%dT%H:%M:%SZ %z")
                 if (False == msn["Active"]) or (True == expired):
                     self.cmdrLibrary[key].missionData.pop(missionId, None)
 

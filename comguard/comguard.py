@@ -324,9 +324,11 @@ class Comguard:
                 faction = entry.get('Faction', '')
                 victim = entry.get('Victim', None)
                 if (victim is not None):
-                    ship_target_info: dict = self.CmdrManager.pop_target(cmdr, victim)
-                    if (ship_target_info is not None): 
-                        faction = ship_target_info.get('Faction')
+                    targetInfo: dict = self.CmdrManager.get_target(cmdr, victim)
+                    if (targetInfo is not None): 
+                        faction = targetInfo.get('Faction', faction)
+                #Hack to override the faction
+                entry['Faction'] = faction
                 self.Api.send_data(cmdr, entry, currentSystem, system, faction)
             if ('murder' == entry['CrimeType']) or ('onFoot_murder' == entry['CrimeType']):
                 self.DataManager.add_tally_by_system(system, entry['Faction'], 'Murdered', 1)
