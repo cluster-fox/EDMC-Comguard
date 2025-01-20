@@ -321,11 +321,11 @@ class Comguard:
         
         if 'commitcrime' == entryName:
             if ('murder' == entry['CrimeType']) or ('onFoot_murder' == entry['CrimeType']) or ('assault' == entry['CrimeType']):
-                faction: str = entry.get('Faction', '')
-                victim: str = entry.get('Victim', None)
-                if (None != victim):
+                faction = entry.get('Faction', '')
+                victim = entry.get('Victim', None)
+                if (victim is not None):
                     ship_target_info: dict = self.CmdrManager.pop_target(cmdr, victim)
-                    if ship_target_info is not None: 
+                    if (ship_target_info is not None): 
                         faction = ship_target_info.get('Faction')
                 self.Api.send_data(cmdr, entry, currentSystem, system, faction)
             if ('murder' == entry['CrimeType']) or ('onFoot_murder' == entry['CrimeType']):
