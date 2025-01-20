@@ -264,12 +264,18 @@ class Comguard:
                 self.DataManager.add_tally_by_system(system, entry['Faction'], 'CombatBonds', entry['Amount'])
             dirty = True
         
+        #MarketBuy
         if 'marketbuy' == entryName:
             entry['Stock'] = self.get_market_data(entry['Type'], 'Stock')
             entry['StockBracket'] = self.get_market_data(entry['Type'], 'StockBracket')
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
 
+        #CargoDepot, MiningRefined, CollectCargo
+        if ('cargodepot' == entryName) or ('miningrefined' == entryName) or ('collectcargo' == entryName):
+            self.Api.send_data(cmdr, entry, currentSystem, system)
+
+        #MarketSell
         if 'marketsell' == entryName:
             entry['Demand'] = self.get_market_data(entry['Type'], 'Demand')
             entry['DemandBracket'] = self.get_market_data(entry['Type'], 'DemandBracket')
@@ -281,9 +287,6 @@ class Comguard:
                 profit *= -1  #Black Market is same as a trade loss
             self.DataManager.add_tally_by_system(system, stationFaction, 'TradeProfit', profit)
             dirty = True
-        
-        if ('cargodepot' == entryName) or ('cargotransfer' == entryName):
-            self.Api.send_data(cmdr, entry, currentSystem, system)
 
         if 'missionaccepted' == entryName:  # mission accepted
             missionId = entry["MissionID"]
