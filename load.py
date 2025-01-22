@@ -3,7 +3,7 @@ import semantic_version
 from comguard.comguard import Comguard
 
 PLUGIN_NAME = "EDMC-Comguard"
-PLUGIN_VERSION = semantic_version.Version.coerce("3.0.0")
+PLUGIN_VERSION = semantic_version.Version.coerce("3.0.1")
 
 # Initialise the main plugin class
 this = Comguard(PLUGIN_NAME, PLUGIN_VERSION)

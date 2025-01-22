@@ -135,7 +135,7 @@ class UI:
     def display_cmdr(self, cmdrName:str):
         apiKey: str = self.Comguard.CmdrManager.get_api_key(cmdrName)
         apiActive: bool = self.Comguard.CmdrManager.get_api_active(cmdrName)
-        Debug.logger.debug(f"Choosing CMDR {cmdrName}, API Key is {apiKey}, API active = {apiActive}")
+        Debug.logger.debug(f"Displaying CMDR {cmdrName}, API Key is ****{apiKey[-4:]}, API active = {apiActive}")
         
         self.fieldCmdr.set(cmdrName)
         self.fieldAPIKey.set(apiKey)
@@ -208,7 +208,6 @@ class UI:
         cmdrName:str = self.fieldCmdr.get()
         apiKey: str = self.Comguard.CmdrManager.get_api_key(cmdrName)
         apiActive: bool = self.Comguard.CmdrManager.get_api_active(cmdrName)
-        Debug.logger.info(f"Changing API for {cmdrName} with API Key {apiKey}, API active = {apiActive}")
         if False == apiActive:
             #CONNECT API
             self.APITestStatus.set("Connecting . . .")
