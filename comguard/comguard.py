@@ -19,7 +19,7 @@ from config import config
 import os.path
 from os import mkdir, path
 import tkinter as tk
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from time import sleep
 from threading import Thread
 
@@ -160,15 +160,12 @@ class Comguard:
         """
         Iterate through MarketData and find a field value for a commodity
         """
-        value = 0
-        Debug.logger.info(f'Searching for {field} of {commodity} in Market.json')
-        for item in self.marketData['Items']:   #Iterate through all items
+        for item in self.marketData.get('Items', []):   #Iterate through all items
             if item['Name'] == f'${commodity}_name;':
-                value = item[field]
-                Debug.logger.info(f'Found {commodity}, {field} is {value}')
-                break
-        
-        return value
+                return item[field]
+
+        Debug.logger.info(f'Could not find {field} of {commodity} in Market.json')
+        return 0
 
 
 
@@ -267,12 +264,18 @@ class Comguard:
                 self.DataManager.add_tally_by_system(system, entry['Faction'], 'CombatBonds', entry['Amount'])
             dirty = True
         
+        #MarketBuy
         if 'marketbuy' == entryName:
             entry['Stock'] = self.get_market_data(entry['Type'], 'Stock')
             entry['StockBracket'] = self.get_market_data(entry['Type'], 'StockBracket')
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
 
+        #CargoDepot, MiningRefined, CollectCargo
+        if ('cargodepot' == entryName) or ('miningrefined' == entryName) or ('collectcargo' == entryName):
+            self.Api.send_data(cmdr, entry, currentSystem, system)
+
+        #MarketSell
         if 'marketsell' == entryName:
             entry['Demand'] = self.get_market_data(entry['Type'], 'Demand')
             entry['DemandBracket'] = self.get_market_data(entry['Type'], 'DemandBracket')
@@ -284,29 +287,32 @@ class Comguard:
                 profit *= -1  #Black Market is same as a trade loss
             self.DataManager.add_tally_by_system(system, stationFaction, 'TradeProfit', profit)
             dirty = True
-        
+
         if 'missionaccepted' == entryName:  # mission accepted
-            self.Api.send_data(cmdr, entry, currentSystem, system)
+            missionId = entry["MissionID"]
             missionData = {
-                "Name": entry["Name"], 
-                "Faction": entry["Faction"], 
-                "MissionID": entry["MissionID"], 
+                "Name": entry.get("Name",''), 
+                "Faction": entry.get("Faction",''), 
                 "System": system, 
                 "SystemAddress": currentSystem, 
+                "Expiry": entry.get("Expiry", "2020-01-01T00:00:00Z"),
                 "Active": 1}
-            self.CmdrManager.add_mission(cmdr, missionData)
+            self.CmdrManager.add_mission(cmdr, missionId, missionData)
+            self.Api.send_data(cmdr, entry, currentSystem, system)
             dirty = True
         
         if 'missionfailed' == entryName:  # mission failed
-            missionSystem = system
-            missionSystemAddress = currentSystem
-            mission = self.CmdrManager.get_mission(cmdr, entry["MissionID"])
+            missionId = entry["MissionID"]
+            mission = self.CmdrManager.get_mission(cmdr, missionId)
+            missionSystem = mission.get('System', system)
+            missionSystemAddress = mission.get('SystemAddress', currentSystem)
+            missionFaction = mission.get('Faction','')
+            self.Api.send_data(cmdr, entry, missionSystemAddress, missionSystem, missionFaction)
             if {} != mission:
-                missionSystem = mission['System']
-                missionFaction = mission['Faction']
-                self.CmdrManager.deactivate_mission(cmdr, entry["MissionID"])
-            self.Api.send_data(cmdr, entry,mission['SystemAddress'], missionSystem, missionFaction)
-            self.DataManager.add_tally_by_system(missionSystem, missionFaction, 'MissionFailed', 1)
+                self.CmdrManager.deactivate_mission(cmdr, missionId)
+                self.DataManager.add_tally_by_system(missionSystem, missionFaction, 'MissionFailed', 1)
+            else:
+                Debug.logger.debug(f"Mission {missionId} was not found in missionlog and may not record")
             dirty = True
         
         if 'missionabandoned' == entryName:
@@ -315,11 +321,14 @@ class Comguard:
         
         if 'commitcrime' == entryName:
             if ('murder' == entry['CrimeType']) or ('onFoot_murder' == entry['CrimeType']) or ('assault' == entry['CrimeType']):
-                faction: str = ''
-                if ('murder' == entry['CrimeType']):
-                    ship_target_info: dict = self.CmdrManager.pop_target(cmdr, entry.get('Victim'), None)
-                    if ship_target_info is not None: 
-                        faction = ship_target_info.get('Faction')
+                faction = entry.get('Faction', '')
+                victim = entry.get('Victim', None)
+                if (victim is not None):
+                    targetInfo: dict = self.CmdrManager.get_target(cmdr, victim)
+                    if (targetInfo is not None): 
+                        faction = targetInfo.get('Faction', faction)
+                #Hack to override the faction
+                entry['Faction'] = faction
                 self.Api.send_data(cmdr, entry, currentSystem, system, faction)
             if ('murder' == entry['CrimeType']) or ('onFoot_murder' == entry['CrimeType']):
                 self.DataManager.add_tally_by_system(system, entry['Faction'], 'Murdered', 1)

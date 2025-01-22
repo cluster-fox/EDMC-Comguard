@@ -2,6 +2,7 @@ import json
 import os.path
 from os import mkdir, path
 from config import config
+from datetime import datetime, timezone
 
 from comguard.cmdrdata import CmdrData
 from comguard.constants import FOLDER_DATA, FILE_SUFFIX
@@ -143,8 +144,8 @@ class CmdrManager:
     def set_megaship(self, cmdr, dictMegaship:dict):
         self.cmdrLibrary[self.get_cmdr_index(cmdr)].Location.megaship = dictMegaship
 
-    def add_mission(self, cmdr, dictMission:dict):
-        self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData.append(dictMission)
+    def add_mission(self, cmdr, missionId:int, dictMission:dict):
+        self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData[missionId] = dictMission
 
     def add_target(self, cmdr, name, target: dict):
         self.cmdrLibrary[self.get_cmdr_index(cmdr)].targetData[name] = target
@@ -172,38 +173,27 @@ class CmdrManager:
         return self.cmdrLibrary[self.get_cmdr_index(cmdr)].Location.megaship
     
     def get_mission(self, cmdr, missionId:int) -> dict:
-        missions = self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData
-        for p in range(len(missions)):
-            if missions[p]["MissionID"] == missionId:
-                return missions[p]
-        return {}
+        return self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData.get(missionId, {})
     
-    def pop_target(self, cmdr, victim) -> dict | None:
-        targetInfo: dict = self.cmdrLibrary[self.get_cmdr_index(cmdr)].targetData.pop(victim, None)
+    def get_target(self, cmdr, victim) -> dict | None:
+        targetInfo = self.cmdrLibrary[self.get_cmdr_index(cmdr)].targetData.get(victim, None)
         return targetInfo
 
     def deactivate_mission(self, cmdr, missionId:int):
-        missions = self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData
-        for p in range(len(missions)):
-            if missions[p]["MissionID"] == missionId:
-                self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData[p]["Active"] = 0
+        self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData[missionId]['Active'] = False
 
     def clean_missions(self):
         for key in self.cmdrLibrary:
-            try:
-                cleanLog = []
-                for msn in range(len(self.cmdrLibrary[key].missionData)):
-                    if self.cmdrLibrary[key].missionData[msn]["Active"] == 1:
-                        cleanLog.append(self.cmdrLibrary[key].missionData[msn])
-                self.cmdrLibrary[key].missionData = cleanLog
-            except:
-                pass
+            for missionId, msn in self.cmdrLibrary[key].missionData.copy().items():
+                expired = datetime.now(timezone.utc) > datetime.strptime(f"{msn['Expiry']} +0000", "%Y-%m-%dT%H:%M:%SZ %z")
+                if (False == msn["Active"]) or (True == expired):
+                    self.cmdrLibrary[key].missionData.pop(missionId, None)
 
 
     def zeroize(self):
         self.apis = {}
         self.cmdrs = []
-        self.cmdrLibrary = []
+        self.cmdrLibrary = {}
         self.save()
         self.load()
         return
