@@ -63,7 +63,7 @@ class Comguard:
         self.TickTime: str = config.get_str("comguard_TickTime")
         self.Ui.display_tick(self.TickTime)
 
-        self.marketData = []
+        self.marketData = {}
         self.marketId = 0
 
         self.megaship_pat:re.Pattern = re.compile("^[a-z]{3}-[0-9]{3} ")
@@ -142,7 +142,7 @@ class Comguard:
         """
         marketID = entry['MarketID']
         if self.marketId != marketID:
-            self.marketData = None
+            self.marketData = {}
             self.marketId = marketID
 
         journaldir = config.get_str('journaldir')
@@ -152,11 +152,12 @@ class Comguard:
         path = pathlib.Path(journaldir) / f'{entry["event"]}.json'
 
         with path.open('rb') as f:
-            # Don't assume we can definitely stomp entry & entryName here
-            self.marketData = json.load(f)
+            jsonData = json.load(f)
+            if jsonData:
+                self.marketData = jsonData
 
 
-    def get_market_data(self, commodity, field):
+    def get_market_data(self, commodity, field, default:int=0):
         """
         Iterate through MarketData and find a field value for a commodity
         """
@@ -165,7 +166,7 @@ class Comguard:
                 return item[field]
 
         Debug.logger.info(f'Could not find {field} of {commodity} in Market.json')
-        return 0
+        return default
 
 
 
@@ -266,8 +267,8 @@ class Comguard:
         
         #MarketBuy
         if 'marketbuy' == entryName:
-            entry['Stock'] = self.get_market_data(entry['Type'], 'Stock')
-            entry['StockBracket'] = self.get_market_data(entry['Type'], 'StockBracket')
+            entry['Stock'] = self.get_market_data(entry['Type'], 'Stock', 1000)
+            entry['StockBracket'] = self.get_market_data(entry['Type'], 'StockBracket', 2)
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
 
@@ -277,8 +278,8 @@ class Comguard:
 
         #MarketSell
         if 'marketsell' == entryName:
-            entry['Demand'] = self.get_market_data(entry['Type'], 'Demand')
-            entry['DemandBracket'] = self.get_market_data(entry['Type'], 'DemandBracket')
+            entry['Demand'] = self.get_market_data(entry['Type'], 'Demand', 0)
+            entry['DemandBracket'] = self.get_market_data(entry['Type'], 'DemandBracket', 2)
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
             
