@@ -73,7 +73,7 @@ class UpdateManager:
         self.release_url = assets[0].get('browser_download_url', None)
         if self.release_url is None: return
 
-        self.remote_version = Version.coerce(version_data['tag_name'])
+        self.remote_version = Version.coerce(version_data['tag_name'][1:])
 
         Debug.logger.info(f"Retrieved version info, latest={str(self.remote_version)}, current={str(self.Comguard.version)}")
 
@@ -112,7 +112,7 @@ class UpdateManager:
         """
         Backup the old plugin and extract the new, ready for next launch
         """
-        Debug.logger.info(f"Auto updating BGS-Tally from version {self.Comguard.version} to {self.remote_version}")
+        Debug.logger.info(f"Auto updating EDMC-Comguard from version {self.Comguard.version} to {self.remote_version}")
 
         self._create_backup()
         self._delete_old_backups()
