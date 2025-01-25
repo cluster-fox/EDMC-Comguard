@@ -222,7 +222,10 @@ class UI:
 
 
     def display_tick(self, ticktime):
-        self.TimeLabel.set(tick_format(ticktime))
+        if ticktime is None or ticktime == '':
+            self.TimeLabel.set('Ticktime Unavailable')
+        else:
+            self.TimeLabel.set(tick_format(ticktime))
 
 
 #SAVE CONFIG

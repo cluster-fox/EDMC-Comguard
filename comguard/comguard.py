@@ -77,7 +77,7 @@ class Comguard:
         """
         Debug.logger.info("Starting plugin.")
 
-        self.check_tick(0)
+        self.check_tick(True)
 
 
 #MAIN FUNCTION STOP
@@ -129,7 +129,7 @@ class Comguard:
             Debug.logger.warning('Elite BGS tick API timed out')
         else:
             tick = response.json()
-            ticktime = tick['lastGalaxyTick']
+            ticktime = tick.get('lastGalaxyTick', None)
             if self.TickTime != ticktime:
                 self.TickTime = ticktime
                 if update_frame == 1:
@@ -217,7 +217,7 @@ class Comguard:
             self.CmdrManager.set_faction(cmdr, entry['StationFaction']['Name'])
             dirty = True
             #  tick check and counter reset
-            self.check_tick(1)
+            self.check_tick(True)
 
         stationFaction = self.CmdrManager.get_faction(cmdr)
 
