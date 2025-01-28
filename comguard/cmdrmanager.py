@@ -180,7 +180,8 @@ class CmdrManager:
         return targetInfo
 
     def deactivate_mission(self, cmdr, missionId:int):
-        self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData.pop(missionId, None)
+        if missionId in self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData:
+            self.cmdrLibrary[self.get_cmdr_index(cmdr)].missionData[missionId]['Active'] = False
 
     def clean_missions(self):
         for key in self.cmdrLibrary:

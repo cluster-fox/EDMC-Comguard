@@ -32,7 +32,7 @@ class CmdrData:
 
 
     def set_missions(self, missions:dict):
-        for key, msn in missions:
+        for key, msn in missions.items():
             self.missionData[int(key)] = msn       
 
 
