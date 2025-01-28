@@ -348,7 +348,7 @@ class Comguard:
                     # We're within the timeout, refresh timestamp and handle the CB
                     megaship['timestamp'] = entry['timestamp']
                     self.CmdrManager.set_megaship(cmdr, megaship)
-                    self._scenario(cmdr, entry, currentSystem)
+                    self._scenario(cmdr, entry, currentSystem, system)
             dirty = True
 
         if 'shiptargeted' == entryName:
@@ -384,7 +384,7 @@ class Comguard:
                     # We're within the timeout, refresh timestamp and handle the CB
                     settlement['timestamp'] = entry['timestamp']
                     self.CmdrManager.set_settlement(cmdr, settlement)
-                    self._ground_cz(cmdr, entry, currentSystem)
+                    self._ground_cz(cmdr, entry, currentSystem, system)
 
             elif conflictZone != {}:
                 timedifference = datetime.strptime(entry['timestamp'], "%Y-%m-%dT%H:%M:%SZ") - datetime.strptime(conflictZone['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
@@ -395,7 +395,7 @@ class Comguard:
                     # We're within the timeout, refresh timestamp and handle the CB
                     conflictZone['timestamp'] = entry['timestamp']
                     self.CmdrManager.set_conflict_zone(cmdr, conflictZone)
-                    self._space_cz(cmdr, entry, currentSystem)
+                    self._space_cz(cmdr, entry, currentSystem, system)
             dirty = True
 
         if 'supercruisedestinationdrop' == entryName:
@@ -430,7 +430,7 @@ class Comguard:
 
 #VERY NEW
 
-    def _ground_cz(self, cmdr, entry:dict, currentSystem:int):
+    def _ground_cz(self, cmdr, entry:dict, currentSystem:int, system:str):
         """
         Combat bond received while we are in an active ground CZ
         """
@@ -454,12 +454,12 @@ class Comguard:
             'settlement':settlement['name']
         }
         event[settlement.get('size', 'low')] = 1
-        self.Api.send_data(cmdr, event, currentSystem)
+        self.Api.send_data(cmdr, event, currentSystem, system)
         settlement['sent'] = True
         self.CmdrManager.set_settlement(cmdr, settlement)
     
     
-    def _space_cz(self, cmdr, entry:dict, currentSystem:int):
+    def _space_cz(self, cmdr, entry:dict, currentSystem:int, system:str):
         conflict: dict = self.CmdrManager.get_conflict_zone(cmdr)
         if conflict.get('sent', False): return
         
@@ -470,12 +470,12 @@ class Comguard:
             'Faction':entry.get('AwardingFaction', "")
         }
         event[conflict.get('type', 'low')] = 1
-        self.Api.send_data(cmdr, event, currentSystem)
+        self.Api.send_data(cmdr, event, currentSystem, system)
         conflict['sent'] = True
         self.CmdrManager.set_conflict_zone(cmdr, conflict)
 
 
-    def _scenario(self, cmdr, entry:dict, currentSystem:int):
+    def _scenario(self, cmdr, entry:dict, currentSystem:int, system:str):
         """
         We are in an active scenario
         """
@@ -490,6 +490,6 @@ class Comguard:
             'type':"Megaship",
             'count':1
         }
-        self.Api.send_data(cmdr, event, currentSystem)
+        self.Api.send_data(cmdr, event, currentSystem, system)
         megaship['sent'] = True
         self.CmdrManager.set_megaship(cmdr, megaship)
