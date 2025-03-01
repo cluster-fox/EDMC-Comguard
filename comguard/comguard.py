@@ -196,6 +196,7 @@ class Comguard:
             try:
                 test = entry['Factions']
             except KeyError:
+                self.Api.send_data(cmdr, entry, entry['SystemAddress'], entry['StarSystem'])
                 return
 
             # If event changes the system location, get factions and populate today data
