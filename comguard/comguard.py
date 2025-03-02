@@ -30,7 +30,8 @@ CZ_GROUND_MED_CB_MAX = 38000
 
 TIME_WORKER_PERIOD_S = 2
 
-LOCATION_LIST = ['startup', 'location', 'fsdjump', 'carrierjump']
+LOCATION_LIST = ['StartUp', 'Location', 'FSDJump', 'CarrierJump']
+BODIES_LIST = ['Scan', 'SAASignalsFound']
 
 class Comguard:
     """
@@ -182,7 +183,7 @@ class Comguard:
             Debug.logger.error(f"The EDMC Version is too old, please upgrade to v5.6.0 or later", exc_info=e)
             return
         
-        entryName = entry.get('event').lower()
+        entryName = entry.get('event')
 
         #We need to set the CMDR in case it's a new one
         self.CmdrManager.set_cmdr(cmdr)
@@ -191,6 +192,9 @@ class Comguard:
             return
         
         dirty: bool = False
+
+        if entryName in BODIES_LIST:
+            self.Api.send_data(cmdr, entry, entry['SystemAddress'], entry['StarSystem'])
 
         if entryName in LOCATION_LIST: 
             try:
@@ -213,7 +217,7 @@ class Comguard:
 
         currentSystem = self.CmdrManager.get_system(cmdr)
 
-        if 'docked' == entryName:
+        if 'Docked' == entryName:
             self.Api.send_data(cmdr, entry, currentSystem, system)
             self.CmdrManager.set_faction(cmdr, entry['StationFaction']['Name'])
             dirty = True
@@ -222,10 +226,10 @@ class Comguard:
 
         stationFaction = self.CmdrManager.get_faction(cmdr)
 
-        if 'market' == entryName:
+        if 'Market' == entryName:
             self.load_market(entry)
         
-        if 'missioncompleted' == entryName:  # get mission influence value
+        if 'MissionCompleted' == entryName:  # get mission influence value
             missionSystem = system
             missionSystemAddress = currentSystem
             mission = self.CmdrManager.get_mission(cmdr, entry["MissionID"])
@@ -249,14 +253,14 @@ class Comguard:
                     self.DataManager.add_tally_by_system(missionSystem, faction, 'MissionPoints', 1)
             dirty = True
 
-        if 'sellexplorationdata' == entryName or "multisellexplorationdata" == entryName:
+        if 'SellExplorationData' == entryName or "MultiSellExplorationData" == entryName:
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
             
             self.DataManager.add_tally_by_system(system, stationFaction, 'CartData', entry['TotalEarnings'])
             dirty = True
 
-        if 'redeemvoucher' == entryName:
+        if 'RedeemVoucher' == entryName:
             self.Api.send_data(cmdr, entry, currentSystem, system)
             
             if 'bounty' == entry['Type']:
@@ -267,18 +271,18 @@ class Comguard:
             dirty = True
         
         #MarketBuy
-        if 'marketbuy' == entryName:
+        if 'MarketBuy' == entryName:
             entry['Stock'] = self.get_market_data(entry['Type'], 'Stock', 1000)
             entry['StockBracket'] = self.get_market_data(entry['Type'], 'StockBracket', 2)
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
 
         #CargoDepot, MiningRefined, CollectCargo
-        if ('cargodepot' == entryName) or ('miningrefined' == entryName) or ('collectcargo' == entryName):
+        if ('CargoDepot' == entryName) or ('MiningRefined' == entryName) or ('CollectCargo' == entryName):
             self.Api.send_data(cmdr, entry, currentSystem, system)
 
         #MarketSell
-        if 'marketsell' == entryName:
+        if 'MarketSell' == entryName:
             entry['Demand'] = self.get_market_data(entry['Type'], 'Demand', 0)
             entry['DemandBracket'] = self.get_market_data(entry['Type'], 'DemandBracket', 2)
             
@@ -290,7 +294,7 @@ class Comguard:
             self.DataManager.add_tally_by_system(system, stationFaction, 'TradeProfit', profit)
             dirty = True
 
-        if 'missionaccepted' == entryName:  # mission accepted
+        if 'MissionAccepted' == entryName:  # mission accepted
             missionId = entry["MissionID"]
             missionData = {
                 "Name": entry.get("Name",''), 
@@ -303,7 +307,7 @@ class Comguard:
             self.Api.send_data(cmdr, entry, currentSystem, system)
             dirty = True
         
-        if 'missionfailed' == entryName:  # mission failed
+        if 'MissionFailed' == entryName:  # mission failed
             missionId = entry["MissionID"]
             mission = self.CmdrManager.get_mission(cmdr, missionId)
             missionSystem = mission.get('System', system)
@@ -317,11 +321,11 @@ class Comguard:
                 Debug.logger.debug(f"Mission {missionId} was not found in missionlog and may not record")
             dirty = True
         
-        if 'missionabandoned' == entryName:
+        if 'MissionAbandoned' == entryName:
             self.CmdrManager.deactivate_mission(cmdr, entry["MissionID"])
             dirty = True
         
-        if 'commitcrime' == entryName:
+        if 'CommitCrime' == entryName:
             if ('murder' == entry['CrimeType']) or ('onFoot_murder' == entry['CrimeType']) or ('assault' == entry['CrimeType']):
                 faction = entry.get('Faction', '')
                 victim = entry.get('Victim', None)
@@ -337,7 +341,7 @@ class Comguard:
                 dirty = True
         
         #NEW
-        if 'bounty' == entryName:
+        if 'Bounty' == entryName:
             megaship: dict = self.CmdrManager.get_megaship(cmdr)
             # Check whether in megaship scenario for scenario tracking
             if megaship != {}:
@@ -352,7 +356,7 @@ class Comguard:
                     self._scenario(cmdr, entry, currentSystem, system)
             dirty = True
 
-        if 'shiptargeted' == entryName:
+        if 'ShipTargeted' == entryName:
             if 'Faction' in entry and 'PilotName_Localised' in entry and 'PilotName' in entry:
                 # Store info on targeted ship
                 last_ship_targeted = {'Faction': entry['Faction'],
@@ -365,14 +369,14 @@ class Comguard:
                     self.CmdrManager.add_target(cmdr, entry['PilotName_Localised'], last_ship_targeted)
             dirty = True
 
-        if ('approachsettlement' == entryName) and state['Odyssey']:
+        if ('ApproachSettlement' == entryName) and state['Odyssey']:
             settlement:dict = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'sent': False}
             self.CmdrManager.set_settlement(cmdr, settlement)
             self.CmdrManager.set_megaship(cmdr, {})
             self.CmdrManager.set_conflict_zone(cmdr, {})
             dirty = True
 
-        if ('factionkillbond' == entryName) and state['Odyssey']:
+        if ('FactionKillBond' == entryName) and state['Odyssey']:
             settlement: dict = self.CmdrManager.get_settlement(cmdr)
             conflictZone: dict = self.CmdrManager.get_conflict_zone(cmdr)
             if settlement != {}:
@@ -399,7 +403,7 @@ class Comguard:
                     self._space_cz(cmdr, entry, currentSystem, system)
             dirty = True
 
-        if 'supercruisedestinationdrop' == entryName:
+        if 'SupercruiseDestinationDrop' == entryName:
             self.CmdrManager.set_conflict_zone(cmdr, {})
             self.CmdrManager.set_megaship(cmdr, {})
             self.CmdrManager.set_settlement(cmdr, {})
@@ -419,7 +423,7 @@ class Comguard:
             dirty = True
 
 
-        if 'supercruiseentry' == entryName:
+        if 'SupercruiseEntry' == entryName:
             self.CmdrManager.set_settlement(cmdr, {})
             self.CmdrManager.set_megaship(cmdr, {})
             self.CmdrManager.set_conflict_zone(cmdr, {})
