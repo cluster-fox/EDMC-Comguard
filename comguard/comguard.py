@@ -194,7 +194,7 @@ class Comguard:
         dirty: bool = False
 
         if entryName in BODIES_LIST:
-            self.Api.send_data(cmdr, entry, entry['SystemAddress'], entry['StarSystem'])
+            self.Api.send_data(cmdr, entry, entry['SystemAddress'], system)
 
         if entryName in LOCATION_LIST: 
             try:
