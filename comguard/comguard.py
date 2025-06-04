@@ -269,7 +269,7 @@ class Comguard:
             elif 'CombatBond' == entry['Type']:
                 self.DataManager.add_tally_by_system(system, entry['Faction'], 'CombatBonds', entry['Amount'])
             dirty = True
-        
+
         #MarketBuy
         if 'MarketBuy' == entryName:
             entry['Stock'] = self.get_market_data(entry['Type'], 'Stock', 1000)
@@ -340,7 +340,6 @@ class Comguard:
                 self.DataManager.add_tally_by_system(system, entry['Faction'], 'Murdered', 1)
                 dirty = True
         
-        #NEW
         if 'Bounty' == entryName:
             megaship: dict = self.CmdrManager.get_megaship(cmdr)
             # Check whether in megaship scenario for scenario tracking
@@ -355,6 +354,9 @@ class Comguard:
                     self.CmdrManager.set_megaship(cmdr, megaship)
                     self._scenario(cmdr, entry, currentSystem, system)
             dirty = True
+        
+        if 'PowerplayMerits' == entryName:
+            self.Api.send_data(cmdr, entry, currentSystem, system)
 
         if 'ShipTargeted' == entryName:
             if 'Faction' in entry and 'PilotName_Localised' in entry and 'PilotName' in entry:
