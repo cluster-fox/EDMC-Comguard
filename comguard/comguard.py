@@ -277,6 +277,10 @@ class Comguard:
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
 
+        #ColonisationDepots and contributions
+        if ('ColonisationConstructionDepot' == entryName) or ('ColonisationContribution' == entryName):
+            self.Api.send_data(cmdr, entry, currentSystem, system)
+
         #CargoDepot, MiningRefined, CollectCargo
         if ('CargoDepot' == entryName) or ('MiningRefined' == entryName) or ('CollectCargo' == entryName):
             self.Api.send_data(cmdr, entry, currentSystem, system)
