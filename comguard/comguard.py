@@ -32,6 +32,8 @@ TIME_WORKER_PERIOD_S = 2
 
 LOCATION_LIST = ['StartUp', 'Location', 'FSDJump', 'CarrierJump']
 BODIES_LIST = ['Scan', 'SAASignalsFound']
+#Tracked Events, non faction related
+TRACKED_LIST = ['ColonisationConstructionDepot', 'ColonisationContribution', 'CargoDepot', 'MiningRefined', 'CollectCargo', 'PowerplayMerits']
 
 class Comguard:
     """
@@ -217,6 +219,9 @@ class Comguard:
 
         currentSystem = self.CmdrManager.get_system(cmdr)
 
+        if entryName in TRACKED_LIST:
+            self.Api.send_data(cmdr, entry, currentSystem, system)
+
         if 'Docked' == entryName:
             self.Api.send_data(cmdr, entry, currentSystem, system)
             self.CmdrManager.set_faction(cmdr, entry['StationFaction']['Name'])
@@ -254,7 +259,6 @@ class Comguard:
             dirty = True
 
         if 'SellExplorationData' == entryName or "MultiSellExplorationData" == entryName:
-            
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
             
             self.DataManager.add_tally_by_system(system, stationFaction, 'CartData', entry['TotalEarnings'])
@@ -276,14 +280,6 @@ class Comguard:
             entry['StockBracket'] = self.get_market_data(entry['Type'], 'StockBracket', 2)
             
             self.Api.send_data(cmdr, entry, currentSystem, system, stationFaction)
-
-        #ColonisationDepots and contributions
-        if ('ColonisationConstructionDepot' == entryName) or ('ColonisationContribution' == entryName):
-            self.Api.send_data(cmdr, entry, currentSystem, system)
-
-        #CargoDepot, MiningRefined, CollectCargo
-        if ('CargoDepot' == entryName) or ('MiningRefined' == entryName) or ('CollectCargo' == entryName):
-            self.Api.send_data(cmdr, entry, currentSystem, system)
 
         #MarketSell
         if 'MarketSell' == entryName:
@@ -358,9 +354,6 @@ class Comguard:
                     self.CmdrManager.set_megaship(cmdr, megaship)
                     self._scenario(cmdr, entry, currentSystem, system)
             dirty = True
-        
-        if 'PowerplayMerits' == entryName:
-            self.Api.send_data(cmdr, entry, currentSystem, system)
 
         if 'ShipTargeted' == entryName:
             if 'Faction' in entry and 'PilotName_Localised' in entry and 'PilotName' in entry:
