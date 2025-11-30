@@ -198,24 +198,16 @@ class Comguard:
         if entryName in BODIES_LIST:
             self.Api.send_data(cmdr, entry, entry['SystemAddress'], system)
 
-        if entryName in LOCATION_LIST: 
-            try:
-                test = entry['Factions']
-            except KeyError:
-                self.Api.send_data(cmdr, entry, entry['SystemAddress'], entry['StarSystem'])
-                return
-
-            # If event changes the system location, get factions and populate today data
-            self.CmdrManager.set_system(cmdr, entry['SystemAddress'])
-
-            if entry.get('Docked', False) and ('StationFaction' in entry):
-                self.CmdrManager.set_faction(cmdr, entry['StationFaction']['Name'])
-
+        if entryName in LOCATION_LIST:
+            self.CmdrManager.set_system(cmdr, entry['SystemAddress']) 
             self.Api.send_data(cmdr, entry, entry['SystemAddress'], entry['StarSystem'])
-            self.CmdrManager.set_system_conflicts(cmdr, entry.get('Conflicts', []))
-            self.DataManager.populate_system_data(entry)
+            if 'Factions' in entry:
+                if entry.get('Docked', False) and ('StationFaction' in entry):
+                    self.CmdrManager.set_faction(cmdr, entry['StationFaction']['Name'])
+
+                self.CmdrManager.set_system_conflicts(cmdr, entry.get('Conflicts', []))
+                self.DataManager.populate_system_data(entry)
             dirty = True
-            
 
         currentSystem = self.CmdrManager.get_system(cmdr)
 
